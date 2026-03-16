@@ -1,0 +1,68 @@
+{
+  "name": "@byreal-io/byreal-perps-cli",
+  "version": "0.1.0",
+  "description": "AI-native CLI for Byreal Hyperliquid perpetual futures trading",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "bin": {
+    "byreal-perps-cli": "dist/index.cjs"
+  },
+  "homepage": "https://github.com/byreal-git/byreal-perps-cli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/byreal-git/byreal-perps-cli.git"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build",
+    "postversion": "npm publish && git push && git push --tags"
+  },
+  "keywords": [
+    "byreal",
+    "hyperliquid",
+    "perps",
+    "perpetual",
+    "futures",
+    "trading",
+    "cli",
+    "defi"
+  ],
+  "author": "Byreal Team (https://github.com/byreal-git)",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/index.cjs",
+    "skills/"
+  ],
+  "devDependencies": {
+    "@inquirer/prompts": "^8.3.0",
+    "@nktkas/hyperliquid": "^0.32.1",
+    "@types/node": "20.19.35",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.6.2",
+    "chalk": "5.6.2",
+    "cli-table3": "0.6.5",
+    "commander": "12.1.0",
+    "decimal.js": "10.6.0",
+    "esbuild": "0.24.2",
+    "eslint": "9.39.3",
+    "prettier": "3.8.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "viem": "^2.47.1",
+    "vitest": "2.1.9"
+  }
+}

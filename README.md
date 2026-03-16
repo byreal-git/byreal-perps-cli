@@ -1,0 +1,101 @@
+# Byreal Perps CLI
+
+AI-native CLI for [Byreal Hyperliquid perpetual  futures trading](https://byreal.io/en/perps). Designed for LLM agents: every command supports structured JSON output, and the built-in skill system lets AI assistants discover and use all capabilities automatically.
+
+## AI Integration
+
+Install it as a **Skill** so your LLM can discover all capabilities:
+
+```bash
+npx skills add byreal-git/byreal-perps-cli
+```
+
+Or install the CLI only:
+
+```bash
+npm install -g @byreal-io/byreal-perps-cli
+```
+
+## Features
+
+- **Account** — Initialize perps account, view balance, deposit/withdraw, trade history.
+- **Orders** — Market and limit orders with TP/SL, list open orders, cancel orders.
+- **Positions** — List positions, close at market/limit, close all, set leverage.
+- **Signals** — Scan markets for trading signals, detailed technical analysis per coin.
+
+## Quick Start
+
+```bash
+# Initialize perps account (required before any trading)
+byreal-perps-cli account init
+
+# Check account info
+byreal-perps-cli account info
+
+# Set leverage
+byreal-perps-cli position leverage BTC 10
+
+# Market order: long 0.01 BTC with TP/SL
+byreal-perps-cli order market buy 0.01 BTC --tp 110000 --sl 90000
+
+# Limit order: short 1 ETH at $4000
+byreal-perps-cli order limit sell 1 ETH 4000
+
+# List open positions and orders
+byreal-perps-cli position list
+byreal-perps-cli order list
+
+# Close a position at market price
+byreal-perps-cli position close-market BTC
+
+# Close a position with limit order
+byreal-perps-cli position close-limit BTC 100000
+
+# Close all positions
+byreal-perps-cli position close-all -y
+
+# Cancel all orders
+byreal-perps-cli order cancel-all -y
+
+# Scan market signals
+byreal-perps-cli signal scan
+
+# Detailed technical analysis for a coin
+byreal-perps-cli signal detail BTC
+```
+
+All commands support `-o json` for structured output.
+
+## Commands
+
+| Command                  | Description                                         |
+| ------------------------ | --------------------------------------------------- |
+| `account init`           | Interactive setup wizard for perps trading           |
+| `account info`           | Show perps account info & balance                    |
+| `account history`        | Show recent trade history                            |
+| `account deposit`        | Deposit funds to perps account (coming soon)         |
+| `account withdraw`       | Withdraw funds from perps account (coming soon)      |
+| `order market`           | Place a market order with optional TP/SL             |
+| `order limit`            | Place a limit order with optional TP/SL              |
+| `order list`             | List open orders                                     |
+| `order cancel`           | Cancel an order by OID                               |
+| `order cancel-all`       | Cancel all open orders                               |
+| `position list`          | List open positions                                  |
+| `position close-market`  | Close a position at market price (full or partial)   |
+| `position close-limit`   | Close a position with a limit order                  |
+| `position close-all`     | Close all open positions at market price             |
+| `position leverage`      | Set leverage for a coin (1-50x, cross/isolated)      |
+| `signal scan`            | Scan markets for trading signals                     |
+| `signal detail`          | Detailed technical analysis for a specific coin      |
+
+## Testnet
+
+All commands support `--testnet` to use Hyperliquid testnet:
+
+```bash
+byreal-perps-cli --testnet account info
+```
+
+## License
+
+MIT

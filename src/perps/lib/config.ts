@@ -36,7 +36,7 @@ export function loadPerpsConfig(testnet: boolean): PerpsConfig {
 
   if (!agentPrivateKey || !masterAddress) {
     console.warn(
-      'No perps account configured. Run "byreal-cli perps account init" to set up a new one.',
+      'No perps account configured. Run "byreal-perps-cli perps account init" to set up a new one.',
     );
   }
 

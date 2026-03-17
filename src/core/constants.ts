@@ -15,7 +15,7 @@ const INJECTED_VERSION =
 
 export const VERSION = INJECTED_VERSION ?? process.env.npm_package_version ?? '0.0.0';
 export const CLI_NAME = 'byreal-perps-cli';
-export const GITHUB_REPO = 'byreal-git/byreal-cli';
+export const GITHUB_REPO = 'byreal-git/byreal-perps-cli';
 
 // ============================================
 // Table Configuration

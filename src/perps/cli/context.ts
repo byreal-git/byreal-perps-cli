@@ -58,7 +58,7 @@ export function createPerpsContext(config: PerpsConfig): PerpsContext {
       if (!walletClient) {
         if (!config.agentPrivateKey) {
           throw new Error(
-            'No perps account configured. Run "byreal-cli perps account init" to set up.',
+            'No perps account configured. Run "byreal-perps-cli perps account init" to set up.',
           );
         }
         const account = privateKeyToAccount(config.agentPrivateKey as Hex);
@@ -76,7 +76,7 @@ export function createPerpsContext(config: PerpsConfig): PerpsContext {
         return account.address;
       }
       throw new Error(
-        'No perps account configured. Run "byreal-cli perps account init" to set up.',
+        'No perps account configured. Run "byreal-perps-cli perps account init" to set up.',
       );
     },
 

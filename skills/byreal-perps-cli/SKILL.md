@@ -116,6 +116,16 @@ byreal-perps-cli signal scan
 byreal-perps-cli signal detail <coin>
 ```
 
+### Update
+
+```bash
+# Check for available CLI updates
+byreal-perps-cli update check
+
+# Install the latest CLI version
+byreal-perps-cli update install
+```
+
 ### Testnet
 
 All commands support `--testnet`:

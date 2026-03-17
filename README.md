@@ -62,6 +62,12 @@ byreal-perps-cli signal scan
 
 # Detailed technical analysis for a coin
 byreal-perps-cli signal detail BTC
+
+# Check for CLI updates
+byreal-perps-cli update check
+
+# Install latest CLI version
+byreal-perps-cli update install
 ```
 
 All commands support `-o json` for structured output.
@@ -87,6 +93,8 @@ All commands support `-o json` for structured output.
 | `position leverage`      | Set leverage for a coin (1-50x, cross/isolated)      |
 | `signal scan`            | Scan markets for trading signals                     |
 | `signal detail`          | Detailed technical analysis for a specific coin      |
+| `update check`           | Check for available CLI updates                      |
+| `update install`         | Install the latest CLI version                       |
 
 ## Testnet
 

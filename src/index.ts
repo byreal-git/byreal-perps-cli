@@ -8,6 +8,7 @@ import { VERSION, CLI_NAME, LOGO, EXPERIMENTAL_WARNING } from './core/constants.
 import { loadPerpsConfig } from './perps/lib/config.js';
 import { createPerpsContext } from './perps/cli/context.js';
 import { registerPerpsCommands } from './perps/commands/index.js';
+import { registerUpdateCommand } from './perps/commands/update.js';
 import { printUpdateNotice } from './core/update-check.js';
 
 const program = new Command();
@@ -20,10 +21,18 @@ program
   .option('-o, --output <format>', 'Output format: text or json', 'text')
   .option('--debug', 'Show debug information')
   .addHelpText('before', chalk.cyan(LOGO) + chalk.yellow(EXPERIMENTAL_WARNING))
-  .hook('preAction', (thisCommand) => {
+  .hook('preAction', (thisCommand, actionCommand) => {
     const opts = thisCommand.optsWithGlobals();
     if (opts.debug) {
       process.env.DEBUG = 'true';
+    }
+
+    // Skip perps context loading for commands that don't need it
+    const rootCmd = actionCommand.parent?.name() ?? actionCommand.name();
+    if (rootCmd === 'update') {
+      thisCommand.setOptionValue('_outputOpts', { json: opts.output === 'json' });
+      thisCommand.setOptionValue('_startTime', performance.now());
+      return;
     }
 
     const testnet = opts.testnet ?? false;
@@ -48,6 +57,7 @@ program
   });
 
 registerPerpsCommands(program);
+registerUpdateCommand(program);
 
 program.showHelpAfterError('(add --help for additional information)');
 

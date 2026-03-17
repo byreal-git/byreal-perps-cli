@@ -249,6 +249,27 @@ const CAPABILITIES: Capability[] = [
       { name: 'coin', type: 'string', required: true, description: 'Coin symbol (e.g., BTC, ETH)' },
     ],
   },
+  // ============================================
+  // Update
+  // ============================================
+  {
+    id: 'update.check',
+    name: 'Check Update',
+    description: 'Check for available CLI updates from npm registry',
+    category: 'query',
+    auth_required: false,
+    command: 'byreal-perps-cli update check',
+    params: [],
+  },
+  {
+    id: 'update.install',
+    name: 'Install Update',
+    description: 'Install the latest CLI version from npm registry',
+    category: 'execute',
+    auth_required: false,
+    command: 'byreal-perps-cli update install',
+    params: [],
+  },
 ];
 
 // ============================================

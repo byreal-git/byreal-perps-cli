@@ -1,6 +1,6 @@
 {
   "name": "@byreal-io/byreal-perps-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "AI-native CLI for Byreal Hyperliquid perpetual futures trading",
   "type": "module",
   "main": "dist/index.cjs",

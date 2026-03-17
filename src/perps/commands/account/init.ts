@@ -51,8 +51,8 @@ export function registerInitCommand(account: Command): void {
           return;
         }
 
-        // Determine method
-        const method = options.method ?? await askMethod();
+        // Determine method: default to 'generate' (EVM private key)
+        const method = options.method ?? 'generate';
 
         if (method === 'existing') {
           const keyInput = options.agentKey ?? await promptPassword('Enter your API wallet private key: ');
@@ -74,21 +74,6 @@ export function registerInitCommand(account: Command): void {
 function validateMethod(value: string): 'existing' | 'generate' {
   if (value === 'existing' || value === 'generate') return value;
   throw new Error('Method must be "existing" or "generate"');
-}
-
-async function askMethod(): Promise<'existing' | 'generate'> {
-  const { select } = await import('../../lib/prompts.js');
-  console.log('This wizard will help you set up your Hyperliquid perps trading account.\n');
-  console.log('You can either:');
-  console.log('  1. Import an existing API wallet key from Hyperliquid');
-  console.log('  2. Generate a new agent wallet using your EVM private key\n');
-  return select<'existing' | 'generate'>(
-    'How would you like to set up?',
-    [
-      { value: 'existing', label: 'Import existing API wallet key' },
-      { value: 'generate', label: 'Generate new agent wallet (sign with EVM private key)' },
-    ],
-  );
 }
 
 function resolveDefault(options: InitOptions): boolean {

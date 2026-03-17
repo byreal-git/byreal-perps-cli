@@ -1,6 +1,6 @@
 {
   "name": "@byreal-io/byreal-perps-cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "AI-native CLI for Byreal Hyperliquid perpetual futures trading",
   "type": "module",
   "main": "dist/index.cjs",
@@ -47,13 +47,15 @@
     "dist/index.cjs",
     "skills/"
   ],
+  "dependencies": {
+    "better-sqlite3": "^12.6.2"
+  },
   "devDependencies": {
     "@inquirer/prompts": "^8.3.0",
     "@nktkas/hyperliquid": "^0.32.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "20.19.35",
     "@types/ws": "^8.18.1",
-    "better-sqlite3": "^12.6.2",
     "chalk": "5.6.2",
     "cli-table3": "0.6.5",
     "commander": "12.1.0",

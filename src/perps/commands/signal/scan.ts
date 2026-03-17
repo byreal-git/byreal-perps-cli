@@ -293,37 +293,49 @@ export function registerScanCommand(signal: Command): void {
       try {
         const client = ctx.getPublicClient();
 
-        // Fetch meta + asset contexts
-        const [meta, assetCtxs] = await client.metaAndAssetCtxs();
-        const universe = meta.universe;
+        // Fetch meta + asset contexts (main + xyz)
+        const [
+          [meta, assetCtxs],
+          [xyzMeta, xyzAssetCtxs],
+        ] = await Promise.all([
+          client.metaAndAssetCtxs(),
+          client.metaAndAssetCtxs({ dex: 'xyz' }),
+        ]);
 
         // Build market data array
         const marketData: AssetMarketData[] = [];
 
-        for (let i = 0; i < universe.length; i++) {
-          const asset = universe[i];
-          const actx = assetCtxs[i];
-          if (!actx) continue;
+        const sources: { universe: typeof meta.universe; ctxs: typeof assetCtxs }[] = [
+          { universe: meta.universe, ctxs: assetCtxs },
+          { universe: xyzMeta.universe, ctxs: xyzAssetCtxs },
+        ];
 
-          const markPx = new Decimal(actx.markPx || '0');
-          const prevDayPx = new Decimal(actx.prevDayPx || '0');
-          const dayNtlVlm = new Decimal(actx.dayNtlVlm || '0');
+        for (const { universe, ctxs } of sources) {
+          for (let i = 0; i < universe.length; i++) {
+            const asset = universe[i];
+            const actx = ctxs[i];
+            if (!actx) continue;
 
-          if (markPx.isZero() || prevDayPx.isZero()) continue;
-          if (dayNtlVlm.lt(minVol)) continue;
+            const markPx = new Decimal(actx.markPx || '0');
+            const prevDayPx = new Decimal(actx.prevDayPx || '0');
+            const dayNtlVlm = new Decimal(actx.dayNtlVlm || '0');
 
-          const change24h = markPx.minus(prevDayPx).div(prevDayPx).mul(100);
+            if (markPx.isZero() || prevDayPx.isZero()) continue;
+            if (dayNtlVlm.lt(minVol)) continue;
 
-          marketData.push({
-            coin: asset.name,
-            markPx,
-            prevDayPx,
-            funding: new Decimal(actx.funding || '0'),
-            dayNtlVlm,
-            openInterest: new Decimal(actx.openInterest || '0'),
-            oraclePx: new Decimal(actx.oraclePx || '0'),
-            change24h,
-          });
+            const change24h = markPx.minus(prevDayPx).div(prevDayPx).mul(100);
+
+            marketData.push({
+              coin: asset.name,
+              markPx,
+              prevDayPx,
+              funding: new Decimal(actx.funding || '0'),
+              dayNtlVlm,
+              openInterest: new Decimal(actx.openInterest || '0'),
+              oraclePx: new Decimal(actx.oraclePx || '0'),
+              change24h,
+            });
+          }
         }
 
         // Sort by volume desc, take top 30 for RSI computation

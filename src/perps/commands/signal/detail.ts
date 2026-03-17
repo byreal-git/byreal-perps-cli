@@ -158,12 +158,21 @@ async function analyzeAsset(
   client: InfoClient,
   coin: string,
 ): Promise<DetailAnalysis> {
-  // Fetch meta + asset context
-  const [meta, assetCtxs] = await client.metaAndAssetCtxs();
-  const idx = meta.universe.findIndex((a) => a.name.toUpperCase() === coin.toUpperCase());
-  if (idx === -1) throw new Error(`Unknown coin: ${coin}`);
+  // Fetch meta + asset context (main + xyz)
+  const [[meta, assetCtxs], [xyzMeta, xyzAssetCtxs]] = await Promise.all([
+    client.metaAndAssetCtxs(),
+    client.metaAndAssetCtxs({ dex: 'xyz' }),
+  ]);
 
-  const actx = assetCtxs[idx];
+  let idx = meta.universe.findIndex((a) => a.name.toUpperCase() === coin.toUpperCase());
+  let actx = idx !== -1 ? assetCtxs[idx] : undefined;
+
+  if (!actx) {
+    idx = xyzMeta.universe.findIndex((a) => a.name.toUpperCase() === coin.toUpperCase());
+    actx = idx !== -1 ? xyzAssetCtxs[idx] : undefined;
+  }
+
+  if (!actx) throw new Error(`Unknown coin: ${coin}`);
   const markPx = new Decimal(actx.markPx);
   const prevDayPx = new Decimal(actx.prevDayPx);
   const change24h = markPx.minus(prevDayPx).div(prevDayPx).mul(100);

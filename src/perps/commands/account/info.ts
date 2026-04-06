@@ -119,7 +119,7 @@ export function registerInfoCommand(account: Command): void {
           console.log('');
         }
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'ACCOUNT_ERROR');
         process.exit(1);
       }
     });

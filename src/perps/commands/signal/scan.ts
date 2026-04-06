@@ -368,7 +368,7 @@ export function registerScanCommand(signal: Command): void {
           formatSignalText(signals, topN);
         }
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'SIGNAL_ERROR');
         process.exit(1);
       }
     });

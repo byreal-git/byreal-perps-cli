@@ -7,7 +7,7 @@ import type { Address, Hex } from 'viem';
 export interface PerpsConfig {
   agentPrivateKey?: Hex;
   masterAddress?: Address;
-  testnet: boolean;
+  expiresAt?: number | null;
   account?: {
     alias: string;
     type: string;
@@ -94,4 +94,5 @@ export interface PerpsPosition {
 
 export interface PerpsOutputOptions {
   json: boolean;
+  yes?: boolean;
 }

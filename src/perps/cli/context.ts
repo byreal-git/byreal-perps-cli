@@ -40,9 +40,7 @@ export function createPerpsContext(config: PerpsConfig): PerpsContext {
   let subscriptionClient: SubscriptionClient | null = null;
   let wsTransport: WebSocketTransport | null = null;
 
-  const transport = new HttpTransport({
-    isTestnet: config.testnet,
-  });
+  const transport = new HttpTransport();
 
   return {
     config,
@@ -83,7 +81,6 @@ export function createPerpsContext(config: PerpsConfig): PerpsContext {
     getSubscriptionClient(): SubscriptionClient {
       if (!subscriptionClient) {
         wsTransport = new WebSocketTransport({
-          isTestnet: config.testnet,
           reconnect: { WebSocket: WebSocket as unknown as typeof globalThis.WebSocket },
         });
         subscriptionClient = new SubscriptionClient({ transport: wsTransport });

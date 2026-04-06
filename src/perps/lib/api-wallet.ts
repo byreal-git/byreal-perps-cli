@@ -1,9 +1,15 @@
 import { generatePrivateKey, privateKeyToAccount, type LocalAccount } from 'viem/accounts';
 import { HttpTransport, InfoClient, ExchangeClient } from '@nktkas/hyperliquid';
 import type { Address, Hex } from 'viem';
+import axios from 'axios';
+import https from 'node:https';
 import {
   HL_AGENT_VALIDITY_DAYS,
 } from '../constants.js';
+
+// Force IPv4 to avoid IPv6 timeout issues
+const httpsAgent = new https.Agent({ family: 4 });
+const apiClient = axios.create({ httpsAgent });
 
 export interface AgentWalletCredentials {
   privateKey: Hex;
@@ -16,6 +22,58 @@ export function generateAgentWallet(): AgentWalletCredentials {
   return {
     privateKey,
     address: account.address,
+  };
+}
+
+
+async function privySignTypedData(
+  agentToken: string,
+  typedData: { domain: any; types: any; primaryType: string; message: any },
+  baseUrl: string,
+): Promise<{ signature: Hex }> {
+  const url = `${baseUrl}/byreal/api/privy-proxy/v1/sign/evm-typed-data`;
+  const chainId = typedData?.domain?.chainId || '42161'
+  const requestBody = { caip2: `eip155:${chainId}`, typedData };
+
+  const { data: body } = await apiClient.post<{
+    retCode: number;
+    retMsg: string;
+    result: {
+      success: boolean;
+      retCode: number;
+      retMsg: string;
+      data?: { data?: { signature?: string } } | null;
+    };
+  }>(url, requestBody, {
+    headers: { 'Authorization': `Bearer ${agentToken}` },
+  });
+
+  const result = body.result;
+
+  if (!result?.success || !result.data?.data?.signature) {
+    throw new Error(`Privy signing failed: [${result?.retCode}] ${result?.retMsg}`);
+  }
+
+  return { signature: result.data.data.signature as Hex };
+}
+
+export interface ServerSigningAccount {
+  address: Address;
+  signTypedData(params: {
+    domain: Record<string, unknown>;
+    types: Record<string, unknown>;
+    primaryType: string;
+    message: Record<string, unknown>;
+  }): Promise<`0x${string}`>;
+}
+
+export function createServerSigningAccount(token: string, walletAddress: `0x${string}`, baseUrl: string): ServerSigningAccount {
+  return {
+    address: walletAddress,
+    async signTypedData(typedData) {
+      const result = await privySignTypedData(token, typedData, baseUrl);
+      return result.signature;
+    },
   };
 }
 
@@ -32,26 +90,24 @@ export interface ApproveAgentResult {
  * but uses a local account directly instead of browser wallet signing.
  */
 export async function approveAgentWithMasterKey(
-  masterAccount: LocalAccount,
-  isTestnet: boolean = false,
+  masterAccount: LocalAccount | ServerSigningAccount,
 ): Promise<ApproveAgentResult> {
   const masterAddress = masterAccount.address;
 
   // Generate a new agent wallet
   const agent = generateAgentWallet();
 
-  const transport = new HttpTransport({ isTestnet });
+  const transport = new HttpTransport();
   const masterClient = new ExchangeClient({ transport, wallet: masterAccount });
 
   const validUntil = Date.now() + HL_AGENT_VALIDITY_DAYS * 24 * 60 * 60 * 1000;
   const agentName = `Byreal Agent Cli valid_until ${validUntil}`;
-
+  
   // Approve agent wallet
   await masterClient.approveAgent({
     agentAddress: agent.address,
     agentName,
   });
-
   return {
     agentPrivateKey: agent.privateKey,
     agentAddress: agent.address,
@@ -71,12 +127,11 @@ export type UserRoleResponse =
 
 export async function validateAgent(
   agentPrivateKey: Hex,
-  isTestnet: boolean = false,
 ): Promise<ValidateAgentResult> {
   const account = privateKeyToAccount(agentPrivateKey);
   const agentAddress = account.address;
 
-  const transport = new HttpTransport({ isTestnet });
+  const transport = new HttpTransport();
   const client = new InfoClient({ transport });
 
   try {
@@ -98,10 +153,4 @@ export async function validateAgent(
   } catch (err) {
     return { valid: false, error: `Failed to validate agent: ${err instanceof Error ? err.message : String(err)}` };
   }
-}
-
-export function getApprovalUrl(isTestnet: boolean = false): string {
-  return isTestnet
-    ? 'https://app.hyperliquid-testnet.xyz/API'
-    : 'https://app.hyperliquid.xyz/API';
 }

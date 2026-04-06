@@ -40,7 +40,7 @@ export function registerCancelCommand(order: Command): void {
           outputSuccess(`Order ${orderId} cancelled`);
         }
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'CANCEL_ERROR');
         process.exit(1);
       }
     });

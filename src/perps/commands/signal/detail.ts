@@ -362,7 +362,7 @@ export function registerDetailCommand(signal: Command): void {
           formatDetailText(analysis);
         }
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'SIGNAL_ERROR');
         process.exit(1);
       }
     });

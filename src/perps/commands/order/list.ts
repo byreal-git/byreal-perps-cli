@@ -47,7 +47,7 @@ export function registerListCommand(order: Command): void {
 
         output(displayOrders, outputOpts);
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'ORDER_LIST_ERROR');
         process.exit(1);
       }
     });

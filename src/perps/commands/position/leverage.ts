@@ -48,7 +48,7 @@ export function registerLeverageCommand(position: Command): void {
           );
         }
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'LEVERAGE_ERROR');
         process.exit(1);
       }
     });

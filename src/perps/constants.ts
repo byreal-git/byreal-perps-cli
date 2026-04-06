@@ -1,5 +1,4 @@
 export const HL_MAINNET_API = 'https://api.hyperliquid.xyz';
-export const HL_TESTNET_API = 'https://api.hyperliquid-testnet.xyz';
 
 // Slippage defaults (percentage)
 export const HL_MARKET_SLIPPAGE_PCT = 5.0;

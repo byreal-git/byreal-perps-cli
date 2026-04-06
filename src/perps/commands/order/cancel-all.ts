@@ -34,7 +34,7 @@ export function registerCancelAllCommand(order: Command): void {
           return;
         }
 
-        if (!options.yes) {
+        if (!options.yes && !outputOpts.yes) {
           const { confirm } = await import('../../lib/prompts.js');
           const msg = `Cancel all ${ordersToCancel.length} open orders?`;
           const confirmed = await confirm(msg, false);
@@ -64,7 +64,7 @@ export function registerCancelAllCommand(order: Command): void {
           outputSuccess(`Cancelled ${ordersToCancel.length} orders`);
         }
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'CANCEL_ERROR');
         process.exit(1);
       }
     });

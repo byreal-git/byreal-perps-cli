@@ -9,6 +9,8 @@ export function getDb(): Database.Database {
 
   mkdirSync(PERPS_DIR, { recursive: true });
   db = new Database(DB_PATH);
+  db.pragma('journal_mode = WAL');
+  db.pragma('busy_timeout = 5000');
   db.pragma('foreign_keys = ON');
   runMigrations(db);
   return db;

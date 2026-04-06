@@ -18,16 +18,20 @@ npm install -g @byreal-io/byreal-perps-cli
 
 ## Features
 
-- **Account** — Initialize perps account, view balance, deposit/withdraw, trade history.
+- **Account** — Initialize perps account (generate or token method), view balance, trade history.
 - **Orders** — Market and limit orders with TP/SL, list open orders, cancel orders.
 - **Positions** — List positions, close at market/limit, close all, set leverage.
 - **Signals** — Scan markets for trading signals, detailed technical analysis per coin.
+- **Catalog** — Discover all CLI capabilities programmatically.
 
 ## Quick Start
 
 ```bash
-# Initialize perps account (required before any trading)
+# Initialize perps account (default: token method, no private key needed)
 byreal-perps-cli account init
+
+# Or initialize via generate method (requires EVM wallet private key)
+byreal-perps-cli account init --method generate
 
 # Check account info
 byreal-perps-cli account info
@@ -76,11 +80,9 @@ All commands support `-o json` for structured output.
 
 | Command                  | Description                                         |
 | ------------------------ | --------------------------------------------------- |
-| `account init`           | Interactive setup wizard for perps trading           |
+| `account init`           | Interactive setup wizard (token default, or generate) |
 | `account info`           | Show perps account info & balance                    |
 | `account history`        | Show recent trade history                            |
-| `account deposit`        | Deposit funds to perps account (coming soon)         |
-| `account withdraw`       | Withdraw funds from perps account (coming soon)      |
 | `order market`           | Place a market order with optional TP/SL             |
 | `order limit`            | Place a limit order with optional TP/SL              |
 | `order list`             | List open orders                                     |
@@ -95,14 +97,9 @@ All commands support `-o json` for structured output.
 | `signal detail`          | Detailed technical analysis for a specific coin      |
 | `update check`           | Check for available CLI updates                      |
 | `update install`         | Install the latest CLI version                       |
-
-## Testnet
-
-All commands support `--testnet` to use Hyperliquid testnet:
-
-```bash
-byreal-perps-cli --testnet account info
-```
+| `catalog list`           | List all CLI capabilities                            |
+| `catalog search`         | Search capabilities by keyword                       |
+| `catalog show`           | Show detailed info about a capability                |
 
 ## License
 

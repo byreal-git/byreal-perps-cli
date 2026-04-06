@@ -15,5 +15,5 @@
 - `src/core/` — Shared constants (VERSION, TABLE_CHARS) and update checker
 - `src/perps/cli/` — Perps command definitions, context, and output formatting
 - `src/perps/commands/` — Command implementations (account, order, position, signal)
-- `src/perps/lib/` — Config, database, validation, API wallet, prompts
+- `src/perps/lib/` — Config, database, validation, API wallet, prompts, OpenClaw config reader
 - `skills/` — AI skill definition for LLM integration

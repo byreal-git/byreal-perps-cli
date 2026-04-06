@@ -55,11 +55,15 @@ export function output(data: unknown, opts: PerpsOutputOptions): void {
   }
 }
 
-export function outputError(message: string, opts?: PerpsOutputOptions): void {
+export function outputError(message: string, opts?: PerpsOutputOptions, code?: string): void {
   if (opts?.json) {
     console.log(JSON.stringify({
       success: false,
-      error: { message },
+      meta: {
+        timestamp: new Date().toISOString(),
+        version: VERSION,
+      },
+      error: { code: code ?? 'UNKNOWN_ERROR', message },
     }, null, 2));
   } else {
     console.error(chalk.red.bold(`Error: ${message}`));

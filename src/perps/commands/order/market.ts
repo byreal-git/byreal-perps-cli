@@ -94,7 +94,7 @@ export function registerMarketCommand(order: Command): void {
           }
         }
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'ORDER_ERROR');
         process.exit(1);
       }
     });

@@ -31,7 +31,7 @@ export function registerHistoryCommand(account: Command): void {
 
         output(displayFills, outputOpts);
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'ACCOUNT_ERROR');
         process.exit(1);
       }
     });

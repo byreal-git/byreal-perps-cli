@@ -75,7 +75,7 @@ export function registerPositionListCommand(position: Command): void {
 
         output(positions, outputOpts);
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'POSITION_ERROR');
         process.exit(1);
       }
     });

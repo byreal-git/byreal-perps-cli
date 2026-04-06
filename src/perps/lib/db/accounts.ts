@@ -21,11 +21,30 @@ function rowToAccount(row: PerpsAccountRow): PerpsAccount {
 export function createPerpsAccount(input: CreatePerpsAccountInput): PerpsAccount {
   const db = getDb();
 
+  const existing = db.prepare('SELECT * FROM accounts WHERE master_address = ?').get(input.masterAddress) as PerpsAccountRow | undefined;
+
   const accountCount = db.prepare('SELECT COUNT(*) as count FROM accounts').get() as { count: number };
   const shouldBeDefault = accountCount.count === 0 || input.setAsDefault;
 
   if (shouldBeDefault) {
     db.prepare('UPDATE accounts SET is_default = 0 WHERE is_default = 1').run();
+  }
+
+  if (existing) {
+    db.prepare(`
+      UPDATE accounts
+      SET alias = ?, agent_private_key = ?, agent_address = ?, is_default = ?, expires_at = ?, updated_at = strftime('%s', 'now')
+      WHERE master_address = ?
+    `).run(
+      input.alias,
+      input.agentPrivateKey,
+      input.agentAddress,
+      shouldBeDefault ? 1 : 0,
+      input.expiresAt ?? null,
+      input.masterAddress,
+    );
+
+    return getPerpsAccountById(existing.id)!;
   }
 
   const result = db.prepare(`

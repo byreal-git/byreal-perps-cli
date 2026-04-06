@@ -123,7 +123,7 @@ export function registerCloseAllCommand(position: Command): void {
         }
 
 
-        if (!options.yes) {
+        if (!options.yes && !outputOpts.yes) {
           const { confirm } = await import('../../lib/prompts.js');
           const coins = positions.map((p) => p.coin).join(', ');
           const msg = `Close ${positions.length} position(s): ${coins}?`;
@@ -150,7 +150,7 @@ export function registerCloseAllCommand(position: Command): void {
           }
         }
       } catch (err) {
-        outputError(err instanceof Error ? err.message : String(err), outputOpts);
+        outputError(err instanceof Error ? err.message : String(err), outputOpts, 'CLOSE_ERROR');
         process.exit(1);
       }
     });

@@ -28,10 +28,14 @@ npm install -g @byreal-io/byreal-perps-cli
 ## Credentials & Permissions
 
 - **All trading commands** require account initialization via `byreal-perps-cli account init` before any trading operations
+- Two initialization methods:
+  - `--method token` (default): Uses OpenClaw config (`~/.openclaw/realclaw-config.json`) to sign via server-side Privy proxy. No private key needed — reads wallet address and auth token from the config file.
+  - `--method generate`: Requires EVM wallet private key (`--master-key`). Generates and approves an agent wallet locally.
 - Read-only commands (account info, position list, order list, account history): Require initialized perps account
 - Write commands (order market, order limit, order cancel, position close-market/close-limit/close-all, position leverage): Require initialized perps account with valid agent wallet
 - Signal commands (signal scan, signal detail): No account required — uses public market data only
 - Perps agent keys are stored locally in the byreal data directory with strict file permissions (mode 0600)
+- If re-initializing with the same master address, the existing account is updated (upsert) rather than creating a duplicate
 - The CLI never transmits private keys over the network — keys are only used locally for transaction signing
 - AI agents should **never** ask users to paste private keys in chat; always direct them to run `byreal-perps-cli account init` interactively
 
@@ -42,8 +46,7 @@ Some commands (`account info`, `position list`, `position close-market`, `positi
 If a command returns a connection error:
 1. The CLI will retry via HTTP API automatically; if it still fails, the issue is likely network connectivity or Hyperliquid API downtime.
 2. Check network connectivity: `curl -s https://api.hyperliquid.xyz/info -X POST -H 'Content-Type: application/json' -d '{"type":"meta"}'`
-3. For testnet, check: `curl -s https://api.hyperliquid-testnet.xyz/info -X POST -H 'Content-Type: application/json' -d '{"type":"meta"}'`
-4. If HTTP API also fails, the Hyperliquid service may be temporarily unavailable — retry after a short wait.
+3. If HTTP API also fails, the Hyperliquid service may be temporarily unavailable — retry after a short wait.
 
 ## Hard Constraints
 
@@ -56,8 +59,11 @@ If a command returns a connection error:
 ### Account Management
 
 ```bash
-# Initialize perps account (interactive wizard)
+# Initialize perps account (default: token method, no private key needed)
 byreal-perps-cli account init
+
+# Initialize via generate method (requires EVM wallet private key)
+byreal-perps-cli account init --method generate
 
 # Show account info & balance
 byreal-perps-cli account info
@@ -126,10 +132,3 @@ byreal-perps-cli update check
 byreal-perps-cli update install
 ```
 
-### Testnet
-
-All commands support `--testnet`:
-
-```bash
-byreal-perps-cli --testnet account info
-```

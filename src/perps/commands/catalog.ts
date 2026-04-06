@@ -42,11 +42,11 @@ const CAPABILITIES: Capability[] = [
     auth_required: false,
     command: 'byreal-perps-cli account init',
     params: [
-      { name: 'agent-key', type: 'string', required: false, description: 'Existing agent wallet private key' },
+      { name: 'agent-key', type: 'string', required: false, description: 'Import an existing agent wallet private key' },
       { name: 'master-key', type: 'string', required: false, description: 'EVM wallet private key (for generate method)' },
-      { name: 'method', type: 'string', required: false, description: 'Setup method', enum: ['existing', 'generate'] },
-      { name: 'alias', type: 'string', required: false, description: 'Account alias' },
+      { name: 'method', type: 'string', required: false, description: 'Setup method', default: 'token', enum: ['token', 'generate'] },
       { name: 'default', type: 'boolean', required: false, description: 'Set as default account', default: 'true' },
+      { name: 'non-interactive', type: 'boolean', required: false, description: 'Run without interactive prompts (requires relevant keys)' },
     ],
   },
   {

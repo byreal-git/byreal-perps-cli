@@ -10,6 +10,7 @@ import { createPerpsContext } from './perps/cli/context.js';
 import { registerPerpsCommands } from './perps/commands/index.js';
 import { registerUpdateCommand } from './perps/commands/update.js';
 import { printUpdateNotice } from './core/update-check.js';
+import { outputError } from './perps/cli/output.js';
 
 const program = new Command();
 
@@ -17,8 +18,8 @@ program
   .name(CLI_NAME)
   .description('Byreal Hyperliquid perpetual futures trading')
   .version(VERSION, '-v, --version', 'Output the version number')
-  .option('--testnet', 'Use testnet instead of mainnet', false)
   .option('-o, --output <format>', 'Output format: text or json', 'text')
+  .option('-y, --yes', 'Skip all confirmation prompts (auto-confirm)')
   .option('--debug', 'Show debug information')
   .addHelpText('before', chalk.cyan(LOGO) + chalk.yellow(EXPERIMENTAL_WARNING))
   .hook('preAction', (thisCommand, actionCommand) => {
@@ -29,19 +30,22 @@ program
 
     // Skip perps context loading for commands that don't need it
     const rootCmd = actionCommand.parent?.name() ?? actionCommand.name();
+    const isJson = opts.output === 'json';
+    const autoYes = opts.yes || isJson; // JSON mode always auto-confirms
+
     if (rootCmd === 'update') {
-      thisCommand.setOptionValue('_outputOpts', { json: opts.output === 'json' });
+      thisCommand.setOptionValue('_outputOpts', { json: isJson, yes: autoYes });
       thisCommand.setOptionValue('_startTime', performance.now());
       return;
     }
 
-    const testnet = opts.testnet ?? false;
-    const config = loadPerpsConfig(testnet);
+    const config = loadPerpsConfig();
     const context = createPerpsContext(config);
 
     thisCommand.setOptionValue('_context', context);
     thisCommand.setOptionValue('_outputOpts', {
-      json: opts.output === 'json',
+      json: isJson,
+      yes: autoYes,
     });
     thisCommand.setOptionValue('_startTime', performance.now());
   })
@@ -76,10 +80,16 @@ async function main() {
       printUpdateNotice();
     }
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(chalk.red(`\nError: ${error.message}`));
+    const isJson = process.argv.includes('-o') && process.argv.includes('json')
+      || process.argv.includes('--output') && process.argv.includes('json');
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (isJson) {
+      outputError(message, { json: true }, 'CLI_ERROR');
+    } else {
+      console.error(chalk.red(`\nError: ${message}`));
       if (process.env.DEBUG) {
-        console.error(error.stack);
+        console.error(error instanceof Error ? error.stack : undefined);
       }
     }
     process.exit(1);

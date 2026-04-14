@@ -69,24 +69,6 @@ const CAPABILITIES: Capability[] = [
       { name: 'limit', type: 'integer', required: false, description: 'Number of fills to show', default: '20' },
     ],
   },
-  {
-    id: 'account.deposit',
-    name: 'Deposit',
-    description: 'Deposit funds to perps account (coming soon)',
-    category: 'execute',
-    auth_required: true,
-    command: 'byreal-perps-cli account deposit',
-    params: [],
-  },
-  {
-    id: 'account.withdraw',
-    name: 'Withdraw',
-    description: 'Withdraw funds from perps account (coming soon)',
-    category: 'execute',
-    auth_required: true,
-    command: 'byreal-perps-cli account withdraw',
-    params: [],
-  },
   // ============================================
   // Order
   // ============================================

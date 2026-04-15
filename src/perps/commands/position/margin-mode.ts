@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { getPerpsContext, getPerpsOutputOptions } from '../../cli/program.js';
 import { output, outputError, outputSuccess } from '../../cli/output.js';
 import { getAssetInfo, resolveSplitCoinArg } from '../order/shared.js';
+import { HL_DEFAULT_LEVERAGE } from '../../constants.js';
 
 type MarginMode = 'cross' | 'isolated';
 
@@ -53,14 +54,18 @@ export function registerMarginModeCommand(position: Command): void {
           );
         }
 
+        // Fetch current leverage via activeAssetData so we only change mode, not leverage value
+        const address = ctx.getWalletAddress();
+        const activeData = await publicClient.activeAssetData({ user: address, coin: assetInfo.coin });
+        const leverage = activeData?.leverage?.value ?? HL_DEFAULT_LEVERAGE;
+
         const result = await client.updateLeverage({
           asset: assetInfo.assetIndex,
           isCross: targetMode === 'cross',
-          leverage: assetInfo.maxLeverage,
+          leverage,
         });
-
         if (outputOpts.json) {
-          output({ coin: assetInfo.coin, marginMode: targetMode, leverage: assetInfo.maxLeverage, ...result }, outputOpts);
+          output({ coin: assetInfo.coin, marginMode: targetMode, leverage, ...result }, outputOpts);
         } else {
           outputSuccess(`Margin mode switched to ${targetMode} for ${assetInfo.coin}`);
         }

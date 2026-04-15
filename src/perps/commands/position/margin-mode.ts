@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { getPerpsContext, getPerpsOutputOptions } from '../../cli/program.js';
 import { output, outputError, outputSuccess } from '../../cli/output.js';
 import { getAssetInfo, resolveSplitCoinArg } from '../order/shared.js';
-import { HL_DEFAULT_LEVERAGE } from '../../constants.js';
 
 type MarginMode = 'cross' | 'isolated';
 
@@ -57,11 +56,11 @@ export function registerMarginModeCommand(position: Command): void {
         const result = await client.updateLeverage({
           asset: assetInfo.assetIndex,
           isCross: targetMode === 'cross',
-          leverage: HL_DEFAULT_LEVERAGE,
+          leverage: assetInfo.maxLeverage,
         });
 
         if (outputOpts.json) {
-          output({ coin: assetInfo.coin, marginMode: targetMode, ...result }, outputOpts);
+          output({ coin: assetInfo.coin, marginMode: targetMode, leverage: assetInfo.maxLeverage, ...result }, outputOpts);
         } else {
           outputSuccess(`Margin mode switched to ${targetMode} for ${assetInfo.coin}`);
         }

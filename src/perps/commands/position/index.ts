@@ -1,6 +1,7 @@
 import type { Command } from 'commander';
 import { registerPositionListCommand } from './list.js';
 import { registerLeverageCommand } from './leverage.js';
+import { registerMarginModeCommand } from './margin-mode.js';
 import { registerCloseMarketCommand } from './close-market.js';
 import { registerCloseLimitCommand } from './close-limit.js';
 import { registerCloseAllCommand } from './close-all.js';
@@ -12,6 +13,7 @@ export function registerPositionCommands(perps: Command): void {
 
   registerPositionListCommand(position);
   registerLeverageCommand(position);
+  registerMarginModeCommand(position);
 
   registerCloseMarketCommand(position);
   registerCloseLimitCommand(position);

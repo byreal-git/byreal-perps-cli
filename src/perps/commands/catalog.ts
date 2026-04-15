@@ -167,6 +167,18 @@ const CAPABILITIES: Capability[] = [
     ],
   },
   {
+    id: 'position.margin-mode',
+    name: 'Switch Margin Mode',
+    description: 'Switch margin mode between cross and isolated for a coin. Validates whether the asset supports the target mode before switching.',
+    category: 'execute',
+    auth_required: true,
+    command: 'byreal-perps-cli position margin-mode <coin> <mode>',
+    params: [
+      { name: 'coin', type: 'string', required: true, description: 'Coin symbol (e.g., BTC, ETH, xyz:gold)' },
+      { name: 'mode', type: 'string', required: true, description: 'Margin mode: cross or isolated' },
+    ],
+  },
+  {
     id: 'position.close-market',
     name: 'Close Position (Market)',
     description: 'Close a perps position at market price (full or partial)',

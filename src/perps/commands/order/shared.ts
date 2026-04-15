@@ -13,6 +13,12 @@ export interface AssetInfo {
   dexIndex: number;
   /** DEX name from registry (e.g., "main", "xyz") */
   dexName: string;
+  /** Whether the asset only supports isolated margin (deprecated, use marginMode) */
+  onlyIsolated: boolean;
+  /** Margin mode restriction: 'strictIsolated' | 'noCross' | undefined (allows cross) */
+  marginMode?: string;
+  /** Maximum leverage allowed for this asset */
+  maxLeverage: number;
 }
 
 // DEX name registry: array index → name prefix
@@ -97,12 +103,15 @@ function collectAssetsFromDex(
   dexName: string,
 ): AssetInfo[] {
   if (!dex?.universe) return [];
-  return dex.universe.map((asset: { name: string; szDecimals: number }, marketIndex: number) => ({
+  return dex.universe.map((asset: { name: string; szDecimals: number; onlyIsolated?: boolean; marginMode?: string; maxLeverage: number }, marketIndex: number) => ({
     assetIndex: buildAssetIndex(dexIndex, marketIndex),
     szDecimals: asset.szDecimals,
     coin: asset.name,
     dexIndex,
     dexName,
+    onlyIsolated: asset.onlyIsolated ?? false,
+    marginMode: asset.marginMode,
+    maxLeverage: asset.maxLeverage,
   }));
 }
 

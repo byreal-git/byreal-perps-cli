@@ -1,6 +1,6 @@
 ---
 name: byreal-perps-cli
-description: "Byreal Hyperliquid perpetual futures trading CLI: account setup, market/limit orders with TP/SL, position close-market/close-limit/close-all, leverage control, margin mode switch (cross/isolated), trade history, market signal scanner & technical analysis. Use when user mentions Hyperliquid, perps, perpetual futures, leverage trading, margin mode, or market signals/technical analysis."
+description: "Byreal Hyperliquid perpetual futures trading CLI: account setup, market/limit orders with TP/SL, position TP/SL management, position close-market/close-limit/close-all, leverage control, margin mode switch (cross/isolated), trade history, market signal scanner & technical analysis. Use when user mentions Hyperliquid, perps, perpetual futures, leverage trading, margin mode, or market signals/technical analysis."
 metadata:
   openclaw:
     homepage: https://github.com/byreal-git/byreal-perps-cli
@@ -33,19 +33,34 @@ TP and SL are **bracket order flags** (`--tp`, `--sl`) attached to a main order.
 
 ### Common mistakes to AVOID
 
-| User says | WRONG interpretation | CORRECT command |
-|---|---|---|
-| "买入 BTC，止损 90000" | `order market sell 0.01 BTC 90000` | `order market buy 0.01 BTC --sl 90000` |
-| "开多 ETH，止盈 4000 止损 3500" | Two separate orders (sell at 4000 + sell at 3500) | `order market long 1 ETH --tp 4000 --sl 3500` |
-| "设置止损 90000" on existing position | `order market sell ...` (opens new short!) | `order market sell ... --sl 90000` is wrong; for existing positions, user should close via `position close-market` or place a new order with `--sl` at entry |
+| User says | WRONG interpretation | Why it's wrong | CORRECT command |
+|---|---|---|---|
+| "买入 BTC，止损 90000" | `order market sell 0.01 BTC 90000` | A sell order is NOT a stop-loss; it opens a short or closes a long immediately | `order market buy 0.01 BTC --sl 90000` |
+| "开多 ETH，止盈 4000 止损 3500" | Two separate orders (sell at 4000 + sell at 3500) | Separate sell orders execute immediately if price is above the sell price | `order market long 1 ETH --tp 4000 --sl 3500` |
+| "止损 24000"（当前价 24800） | `order limit sell 0.01 COIN 24000 --reduce-only` | Limit sell at 24000 means "sell at 24000 **or better**"; market price 24800 > 24000, so it **fills instantly at ~24800** — this is NOT a stop-loss | `order market long 0.01 COIN --sl 24000` (attach at entry) |
+| "止损 24000" | `order limit sell 0.01 COIN 24000 --sl 24000` | Combining a limit sell with `--sl` is nonsensical — the main sell order fills immediately, making the `--sl` trigger order pointless | `order market long 0.01 COIN --sl 24000` (attach at entry) |
+| "设置止损 90000" on existing position | `order market sell ...` (opens new short!) | A sell/short order **opens a new position** or **closes immediately**, it does NOT set a conditional stop | `position tpsl BTC --sl 90000` (sets position-level stop-loss) |
+
+### CRITICAL: limit sell ≠ stop-loss
+
+A **limit sell at price X** means "sell at X or higher." If the current market price is already above X, the order **fills immediately at market price**. This is the opposite of what a stop-loss does.
+
+A **stop-loss (`--sl X`)** means "when price drops to X, THEN trigger a sell." It waits — it does NOT execute until the trigger price is reached.
+
+**NEVER use `order limit sell` or `order market sell` to simulate a stop-loss.** NEVER use `position close-limit` to simulate a stop-loss. These are NOT trigger orders and will execute immediately if conditions are met.
 
 ### Key rules for TP/SL
 
-- `--tp` and `--sl` are ALWAYS attached to `order market` or `order limit` commands as flags
+- `--tp` and `--sl` can be attached to **opening** orders: `order market buy/long/sell/short` or `order limit buy/long/sell/short`
+- They can also be set or modified on **existing positions** via `position tpsl <coin> --tp <price> --sl <price>`
 - They create **trigger orders** that fire only when the trigger price is reached
 - They are **reduce-only** (`r: true`) — they close the position, they do NOT open a new one
 - For a **long/buy** position: `--sl` triggers a sell when price drops; `--tp` triggers a sell when price rises
 - For a **short/sell** position: `--sl` triggers a buy when price rises; `--tp` triggers a buy when price drops
+- **NEVER** attach `--tp`/`--sl` to a sell/short order intended as a "close" — they are for opening orders only
+- To **view** existing TP/SL: `position tpsl <coin>` (no flags)
+- To **cancel** existing TP/SL: `position tpsl <coin> --cancel-tp` or `--cancel-sl`
+- When setting new TP/SL on a position that already has them, the old orders are **automatically cancelled** before placing new ones
 
 ## Installation
 
@@ -148,6 +163,19 @@ byreal-perps-cli position leverage <coin> <leverage>
 byreal-perps-cli position margin-mode <coin> <mode>
 byreal-perps-cli position margin-mode BTC cross
 byreal-perps-cli position margin-mode ETH isolated
+
+# Set TP/SL on existing position
+byreal-perps-cli position tpsl <coin> --tp <price> --sl <price>
+
+# Set only stop-loss on existing position
+byreal-perps-cli position tpsl BTC --sl 90000
+
+# View existing TP/SL orders for a position
+byreal-perps-cli position tpsl <coin>
+
+# Cancel existing TP/SL orders
+byreal-perps-cli position tpsl <coin> --cancel-tp
+byreal-perps-cli position tpsl <coin> --cancel-sl
 
 # Close at market price (full or partial)
 byreal-perps-cli position close-market <coin>

@@ -5,6 +5,7 @@ import { registerMarginModeCommand } from './margin-mode.js';
 import { registerCloseMarketCommand } from './close-market.js';
 import { registerCloseLimitCommand } from './close-limit.js';
 import { registerCloseAllCommand } from './close-all.js';
+import { registerTpSlCommand } from './tpsl.js';
 
 export function registerPositionCommands(perps: Command): void {
   const position = perps
@@ -14,6 +15,7 @@ export function registerPositionCommands(perps: Command): void {
   registerPositionListCommand(position);
   registerLeverageCommand(position);
   registerMarginModeCommand(position);
+  registerTpSlCommand(position);
 
   registerCloseMarketCommand(position);
   registerCloseLimitCommand(position);

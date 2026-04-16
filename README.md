@@ -20,7 +20,7 @@ npm install -g @byreal-io/byreal-perps-cli
 
 - **Account** — Initialize perps account (generate or token method), view balance, trade history.
 - **Orders** — Market and limit orders with TP/SL, list open orders, cancel orders.
-- **Positions** — List positions, close at market/limit, close all, set leverage.
+- **Positions** — List positions, set/manage TP/SL on existing positions, close at market/limit, close all, set leverage.
 - **Signals** — Scan markets for trading signals, detailed technical analysis per coin.
 - **Catalog** — Discover all CLI capabilities programmatically.
 
@@ -48,6 +48,12 @@ byreal-perps-cli order limit sell 1 ETH 4000
 # List open positions and orders
 byreal-perps-cli position list
 byreal-perps-cli order list
+
+# Set TP/SL on an existing position
+byreal-perps-cli position tpsl BTC --tp 110000 --sl 90000
+
+# View existing TP/SL for a position
+byreal-perps-cli position tpsl BTC
 
 # Close a position at market price
 byreal-perps-cli position close-market BTC
@@ -89,6 +95,7 @@ All commands support `-o json` for structured output.
 | `order cancel`           | Cancel an order by OID                               |
 | `order cancel-all`       | Cancel all open orders                               |
 | `position list`          | List open positions                                  |
+| `position tpsl`          | Set, view, or cancel TP/SL on an existing position   |
 | `position close-market`  | Close a position at market price (full or partial)   |
 | `position close-limit`   | Close a position with a limit order                  |
 | `position close-all`     | Close all open positions at market price             |

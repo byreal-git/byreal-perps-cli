@@ -179,6 +179,21 @@ const CAPABILITIES: Capability[] = [
     ],
   },
   {
+    id: 'position.tpsl',
+    name: 'Position TP/SL',
+    description: 'Set, view, or cancel take-profit and stop-loss trigger orders on an existing position. Uses positionTpsl grouping so orders scale with position size.',
+    category: 'execute',
+    auth_required: true,
+    command: 'byreal-perps-cli position tpsl <coin>',
+    params: [
+      { name: 'coin', type: 'string', required: true, description: 'Coin symbol (e.g., BTC, ETH, xyz:gold)' },
+      { name: 'tp', type: 'string', required: false, description: 'Take profit trigger price' },
+      { name: 'sl', type: 'string', required: false, description: 'Stop loss trigger price' },
+      { name: 'cancel-tp', type: 'boolean', required: false, description: 'Cancel existing take profit order' },
+      { name: 'cancel-sl', type: 'boolean', required: false, description: 'Cancel existing stop loss order' },
+    ],
+  },
+  {
     id: 'position.close-market',
     name: 'Close Position (Market)',
     description: 'Close a perps position at market price (full or partial)',

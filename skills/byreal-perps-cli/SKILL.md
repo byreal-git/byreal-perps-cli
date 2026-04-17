@@ -86,6 +86,47 @@ npm install -g @byreal-io/byreal-perps-cli
 - The CLI never transmits private keys over the network — keys are only used locally for transaction signing
 - AI agents should **never** ask users to paste private keys in chat; always direct them to run `byreal-perps-cli account init` interactively
 
+## Confirmation Prompts & AI Agent Behavior
+
+Some commands require user confirmation before executing. In a **non-interactive environment** (e.g., AI agent via OpenClaw, no TTY), the CLI will **output a warning and exit with code 1** instead of hanging on an interactive prompt. The AI agent should relay the warning to the user and re-run with `-y` once the user confirms.
+
+### Commands that require confirmation
+
+| Command | When confirmation is triggered |
+|---|---|
+| `position close-limit <coin> <price>` | Limit price would fill immediately with >5% slippage |
+| `position close-all` | Always (closing all positions is destructive) |
+| `order cancel-all` | Always (cancelling all orders is destructive) |
+
+### How to skip confirmation
+
+Use the **global** `-y` flag (before subcommand) or the **local** `-y` flag (after subcommand):
+
+```bash
+# Global -y (skips ALL confirmations for the entire command)
+byreal-perps-cli -y position close-limit BTC 95000
+byreal-perps-cli -y position close-all
+byreal-perps-cli -y order cancel-all
+
+# Local -y (skips confirmation for that specific subcommand only)
+byreal-perps-cli position close-limit BTC 95000 -y
+byreal-perps-cli position close-all -y
+byreal-perps-cli order cancel-all -y
+
+# JSON output mode also auto-confirms (no -y needed)
+byreal-perps-cli -o json position close-all
+```
+
+### AI agent workflow (non-TTY)
+
+1. AI runs: `byreal-perps-cli position close-limit BTC 50000`
+2. CLI detects >5% slippage, outputs: `Limit sell at 50000 is 8.5% away from mark 54500. This will fill immediately with significant slippage. Use -y to confirm.`
+3. CLI exits with code 1
+4. AI relays the risk warning to the user
+5. User confirms → AI re-runs: `byreal-perps-cli -y position close-limit BTC 50000`
+
+**IMPORTANT:** AI agents should ALWAYS attempt the command **without** `-y` first for commands that may trigger slippage warnings (`close-limit`). This ensures the user is informed of risks. Only add `-y` after the user has acknowledged the warning. For `close-all` and `cancel-all`, the AI should describe the action to the user and get confirmation before running with `-y`.
+
 ## WebSocket / API Fallback
 
 Some commands (`account info`, `position list`, `position close-market`, `position close-limit`, `position close-all`) use WebSocket subscriptions to fetch real-time data. If the WebSocket connection fails or times out, the CLI **automatically falls back to HTTP API** calls. No user action is needed.

@@ -35,8 +35,12 @@ export function registerCancelAllCommand(order: Command): void {
         }
 
         if (!options.yes && !outputOpts.yes) {
-          const { confirm } = await import('../../lib/prompts.js');
           const msg = `Cancel all ${ordersToCancel.length} open orders?`;
+          if (!process.stdin.isTTY) {
+            outputError(`${msg} Use -y to confirm.`);
+            process.exit(1);
+          }
+          const { confirm } = await import('../../lib/prompts.js');
           const confirmed = await confirm(msg, false);
           if (!confirmed) {
             outputSuccess('Cancelled');

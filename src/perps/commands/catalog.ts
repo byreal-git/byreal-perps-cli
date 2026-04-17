@@ -130,7 +130,7 @@ const CAPABILITIES: Capability[] = [
   {
     id: 'order.cancel-all',
     name: 'Cancel All Orders',
-    description: 'Cancel all open perps orders',
+    description: 'Cancel all open perps orders. Requires confirmation. In non-TTY environments, outputs a warning and exits — re-run with -y to confirm.',
     category: 'execute',
     auth_required: true,
     command: 'byreal-perps-cli order cancel-all',
@@ -209,7 +209,7 @@ const CAPABILITIES: Capability[] = [
   {
     id: 'position.close-limit',
     name: 'Close Position (Limit)',
-    description: 'Close a perps position with a limit order',
+    description: 'Close a perps position with a limit order. Prompts for confirmation if the limit price would fill immediately with >5% slippage. In non-TTY environments, outputs a warning and exits — re-run with -y to confirm.',
     category: 'execute',
     auth_required: true,
     command: 'byreal-perps-cli position close-limit <coin> <price>',
@@ -218,12 +218,13 @@ const CAPABILITIES: Capability[] = [
       { name: 'price', type: 'string', required: true, description: 'Limit price' },
       { name: 'size', type: 'string', required: false, description: 'Partial close size (default: full close)' },
       { name: 'tif', type: 'string', required: false, description: 'Time-in-force', default: 'Gtc', enum: ['Gtc', 'Ioc', 'Alo'] },
+      { name: 'yes', type: 'boolean', required: false, description: 'Skip slippage confirmation prompt' },
     ],
   },
   {
     id: 'position.close-all',
     name: 'Close All Positions',
-    description: 'Close all open perps positions at market price',
+    description: 'Close all open perps positions at market price. Requires confirmation. In non-TTY environments, outputs a warning and exits — re-run with -y to confirm.',
     category: 'execute',
     auth_required: true,
     command: 'byreal-perps-cli position close-all',

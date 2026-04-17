@@ -16,6 +16,7 @@ export function registerCloseLimitCommand(position: Command): void {
     .allowExcessArguments()
     .option('--size <n>', 'Partial close size (default: full close)')
     .option('--tif <tif>', 'Time-in-force: Gtc, Ioc, Alo', 'Gtc')
+    .option('-y, --yes', 'Skip confirmation prompt')
     .action(async function (
       this: Command,
       coin: string,
@@ -23,6 +24,7 @@ export function registerCloseLimitCommand(position: Command): void {
       options: {
         size?: string;
         tif?: string;
+        yes?: boolean;
       },
     ) {
       const ctx = getPerpsContext(this);
@@ -65,6 +67,33 @@ export function registerCloseLimitCommand(position: Command): void {
         }
 
         const isBuy = !isLong;
+
+        // Validate limit price against mark to catch typos
+        const dexOpt = resolvedCoin.toLowerCase().startsWith('xyz:') || resolvedCoin.toLowerCase().startsWith('xyz ') ? { dex: 'xyz' as const } : {};
+        const mids = await publicClient.allMids(dexOpt) as Record<string, string>;
+        const midStr = mids[apiCoin];
+        if (midStr) {
+          const mid = new Decimal(midStr);
+          if (mid.isFinite() && mid.gt(0)) {
+            const limitDec = new Decimal(limitPx);
+            const wouldFillImmediately = isBuy ? limitDec.gte(mid) : limitDec.lte(mid);
+            const slippagePct = limitDec.minus(mid).abs().div(mid).mul(100);
+            if (wouldFillImmediately && slippagePct.gt(5) && !options.yes && !outputOpts.yes) {
+              const side = isBuy ? 'buy' : 'sell';
+              const msg = `Limit ${side} at ${limitPx} is ${slippagePct.toFixed(1)}% away from mark ${mid}. This will fill immediately with significant slippage.`;
+              if (!process.stdin.isTTY) {
+                outputError(`${msg} Use -y to confirm.`);
+                process.exit(1);
+              }
+              const { confirm } = await import('../../lib/prompts.js');
+              const confirmed = await confirm(`${msg} Continue?`, false);
+              if (!confirmed) {
+                outputSuccess('Cancelled');
+                return;
+              }
+            }
+          }
+        }
 
         const result = await client.order({
           orders: [

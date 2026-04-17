@@ -89,17 +89,22 @@ export function registerCloseAllCommand(position: Command): void {
         const orders: any[] = [];
         const orderCoins: string[] = [];
 
-        for (const pos of positions) {
+        // Fail the whole batch early if any position is missing a mid price
+        const missingMidCoins = positions.filter((pos) => {
           const midStr = mids[pos.coin];
-          if (!midStr) {
-            outputError(`Cannot get mid price for ${pos.coin}`);
-            continue;
-          }
+          if (!midStr) return true;
           const mid = new Decimal(midStr);
-          if (!mid.isFinite() || mid.lte(0)) {
-            outputError(`Cannot get mid price for ${pos.coin}`);
-            continue;
-          }
+          return !mid.isFinite() || mid.lte(0);
+        }).map((pos) => pos.coin);
+
+        if (missingMidCoins.length > 0) {
+          throw new Error(
+            `Cannot get mid price for: ${missingMidCoins.join(', ')}. Aborting batch close to prevent partial execution.`,
+          );
+        }
+
+        for (const pos of positions) {
+          const mid = new Decimal(mids[pos.coin]);
 
           const isBuy = !pos.isLong;
           const limitPx = isBuy
@@ -124,9 +129,13 @@ export function registerCloseAllCommand(position: Command): void {
 
 
         if (!options.yes && !outputOpts.yes) {
-          const { confirm } = await import('../../lib/prompts.js');
           const coins = positions.map((p) => p.coin).join(', ');
           const msg = `Close ${positions.length} position(s): ${coins}?`;
+          if (!process.stdin.isTTY) {
+            outputError(`${msg} Use -y to confirm.`);
+            process.exit(1);
+          }
+          const { confirm } = await import('../../lib/prompts.js');
           const confirmed = await confirm(msg, false);
           if (!confirmed) {
             outputSuccess('Cancelled');

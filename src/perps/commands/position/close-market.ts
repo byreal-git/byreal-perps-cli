@@ -2,7 +2,7 @@ import Decimal from 'decimal.js';
 import { Command } from 'commander';
 import { getPerpsContext, getPerpsOutputOptions } from '../../cli/program.js';
 import { output, outputError, outputSuccess } from '../../cli/output.js';
-import { getAssetInfo, formatPrice, formatSize, formatOrderStatus, isKnownDex } from '../order/shared.js';
+import { getAssetInfo, formatPrice, formatSize, formatOrderStatus, isKnownDex, dexNameToStateKey, dexNameToOpt } from '../order/shared.js';
 import { getOrderConfig } from '../../lib/order-config.js';
 import { fetchAllDexsClearinghouseStates } from '../../lib/fetch-states.js';
 import type { ClearinghouseStateResponse } from '@nktkas/hyperliquid';
@@ -37,16 +37,18 @@ export function registerCloseMarketCommand(position: Command): void {
           resolvedCoin = `${coin}:${excessArgs[0]}`;
         }
 
-        const { assetIndex, szDecimals, coin: apiCoin } = await getAssetInfo(publicClient, resolvedCoin);
+        const { assetIndex, szDecimals, coin: apiCoin, dexName } = await getAssetInfo(publicClient, resolvedCoin);
 
         const clearinghouseStates = await fetchAllDexsClearinghouseStates(ctx, address);
 
-        const assetPosition = clearinghouseStates.flatMap(
-          ([, state]: [string, ClearinghouseStateResponse]) =>
-            (state?.assetPositions ?? []),
-        ).find(
-          (ap: any) => ap.position.coin.toUpperCase() === apiCoin.toUpperCase() && !new Decimal(ap.position.szi || '0').isZero(),
-        );
+        const assetPosition = clearinghouseStates
+          .filter(([name]: [string, ClearinghouseStateResponse]) => name === dexNameToStateKey(dexName))
+          .flatMap(
+            ([, state]: [string, ClearinghouseStateResponse]) =>
+              (state?.assetPositions ?? []),
+          ).find(
+            (ap: any) => ap.position.coin.toUpperCase() === apiCoin.toUpperCase() && !new Decimal(ap.position.szi || '0').isZero(),
+          );
 
         if (!assetPosition) {
           throw new Error(`No open position for ${apiCoin}`);
@@ -67,11 +69,7 @@ export function registerCloseMarketCommand(position: Command): void {
           options.slippage ?? config.slippage,
         ).div(100);
 
-        const [mainMids, xyzMids] = await Promise.all([
-          publicClient.allMids() as Promise<Record<string, string>>,
-          publicClient.allMids({ dex: 'xyz' }) as Promise<Record<string, string>>,
-        ]);
-        const mids: Record<string, string> = { ...mainMids, ...xyzMids };
+        const mids = await publicClient.allMids(dexNameToOpt(dexName)) as Record<string, string>;
         const mid = new Decimal(mids[apiCoin] ?? '0');
         if (!mid.isFinite() || mid.lte(0)) {
           throw new Error(`Cannot get mid price for ${apiCoin}`);

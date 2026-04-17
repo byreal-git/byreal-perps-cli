@@ -156,5 +156,16 @@ export function deleteExpiredAccounts(): number {
   const result = db.prepare(
     'DELETE FROM accounts WHERE expires_at IS NOT NULL AND expires_at < ?',
   ).run(nowMs);
+
+  if (result.changes > 0) {
+    const hasDefault = db.prepare('SELECT 1 FROM accounts WHERE is_default = 1').get();
+    if (!hasDefault) {
+      const first = db.prepare('SELECT id FROM accounts ORDER BY created_at ASC LIMIT 1').get() as { id: number } | undefined;
+      if (first) {
+        db.prepare('UPDATE accounts SET is_default = 1 WHERE id = ?').run(first.id);
+      }
+    }
+  }
+
   return result.changes;
 }

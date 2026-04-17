@@ -30,20 +30,28 @@ export function registerCancelAllCommand(order: Command): void {
         const ordersToCancel: Order[] = [...(mainOrders as Order[]), ...(xyzOrders as Order[])];
 
         if (ordersToCancel.length === 0) {
-          outputSuccess('No open orders to cancel');
+          if (outputOpts.json) {
+            output({ orders: [], message: 'No open orders to cancel' }, outputOpts);
+          } else {
+            outputSuccess('No open orders to cancel');
+          }
           return;
         }
 
         if (!options.yes && !outputOpts.yes) {
           const msg = `Cancel all ${ordersToCancel.length} open orders?`;
           if (!process.stdin.isTTY) {
-            outputError(`${msg} Use -y to confirm.`);
+            outputError(`${msg} Use -y to confirm.`, outputOpts, 'CONFIRMATION_REQUIRED');
             process.exit(1);
           }
           const { confirm } = await import('../../lib/prompts.js');
           const confirmed = await confirm(msg, false);
           if (!confirmed) {
-            outputSuccess('Cancelled');
+            if (outputOpts.json) {
+              output({ cancelled: true, message: 'User cancelled' }, outputOpts);
+            } else {
+              outputSuccess('Cancelled');
+            }
             return;
           }
         }

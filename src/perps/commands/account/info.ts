@@ -2,6 +2,7 @@ import Decimal from 'decimal.js';
 import { Command } from 'commander';
 import { getPerpsContext, getPerpsOutputOptions } from '../../cli/program.js';
 import { output, outputError } from '../../cli/output.js';
+import { stateKeyToDexName } from '../order/shared.js';
 import { fetchAccountState } from '../../lib/fetch-states.js';
 import type { ClearinghouseStateResponse } from '@nktkas/hyperliquid';
 
@@ -32,7 +33,7 @@ export function registerInfoCommand(account: Command): void {
         const dexMarginUsed: Record<string, Decimal> = {};
 
         for (const [dexName, state] of states) {
-          const dexKey = dexName === '' ? 'main' : dexName;
+          const dexKey = stateKeyToDexName(dexName);
 
           const marginUsedVal = new Decimal(
             state?.marginSummary?.totalMarginUsed ?? '0',

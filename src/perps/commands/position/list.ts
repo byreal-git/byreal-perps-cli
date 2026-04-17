@@ -2,6 +2,7 @@ import Decimal from 'decimal.js';
 import { Command } from 'commander';
 import { getPerpsContext, getPerpsOutputOptions } from '../../cli/program.js';
 import { output, outputError } from '../../cli/output.js';
+import { stateKeyToDexName } from '../order/shared.js';
 import { fetchAllDexsClearinghouseStates } from '../../lib/fetch-states.js';
 import type { ClearinghouseStateResponse } from '@nktkas/hyperliquid';
 
@@ -51,7 +52,7 @@ export function registerPositionListCommand(position: Command): void {
         // Aggregate positions from all DEXes
         let positions = clearinghouseStates.flatMap(
           ([dexName, state]: [string, ClearinghouseStateResponse]) => {
-            const dexKey = dexName === '' ? 'main' : dexName;
+            const dexKey = stateKeyToDexName(dexName);
             return mapPositions(state?.assetPositions ?? [], dexKey);
           },
         );

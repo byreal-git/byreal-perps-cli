@@ -14,7 +14,11 @@ export function loadPerpsConfig(): PerpsConfig {
   if (defaultAccount) {
     if (isAccountExpired(defaultAccount)) {
       deletePerpsAccount(defaultAccount.alias);
-      defaultAccount = null;
+      try {
+        defaultAccount = getDefaultPerpsAccount();
+      } catch {
+        defaultAccount = null;
+      }
     }
   }
 

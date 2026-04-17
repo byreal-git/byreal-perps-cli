@@ -69,7 +69,11 @@ export function registerCloseAllCommand(position: Command): void {
         );
 
         if (positions.length === 0) {
-          outputSuccess('No open positions to close');
+          if (outputOpts.json) {
+            output({ positions: [], message: 'No open positions to close' }, outputOpts);
+          } else {
+            outputSuccess('No open positions to close');
+          }
           return;
         }
 
@@ -123,22 +127,25 @@ export function registerCloseAllCommand(position: Command): void {
         }
 
         if (orders.length === 0) {
-          outputError('No valid orders to submit');
+          outputError('No valid orders to submit', outputOpts, 'CLOSE_ERROR');
           process.exit(1);
         }
-
 
         if (!options.yes && !outputOpts.yes) {
           const coins = positions.map((p) => p.coin).join(', ');
           const msg = `Close ${positions.length} position(s): ${coins}?`;
           if (!process.stdin.isTTY) {
-            outputError(`${msg} Use -y to confirm.`);
+            outputError(`${msg} Use -y to confirm.`, outputOpts, 'CONFIRMATION_REQUIRED');
             process.exit(1);
           }
           const { confirm } = await import('../../lib/prompts.js');
           const confirmed = await confirm(msg, false);
           if (!confirmed) {
-            outputSuccess('Cancelled');
+            if (outputOpts.json) {
+              output({ cancelled: true, message: 'User cancelled' }, outputOpts);
+            } else {
+              outputSuccess('Cancelled');
+            }
             return;
           }
         }

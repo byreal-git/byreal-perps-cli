@@ -3,7 +3,7 @@ import { Command } from 'commander';
 import { getPerpsContext, getPerpsOutputOptions } from '../../cli/program.js';
 import { output, outputError, outputSuccess } from '../../cli/output.js';
 import { validatePositiveNumber, validateTif } from '../../lib/validation.js';
-import { getAssetInfo, resolveSplitCoinArg, formatPrice, formatSize, formatOrderStatus } from '../order/shared.js';
+import { getAssetInfo, resolveSplitCoinArg, formatPrice, formatSize, formatOrderStatus, dexNameToStateKey, dexNameToOpt } from '../order/shared.js';
 import { fetchAllDexsClearinghouseStates } from '../../lib/fetch-states.js';
 import type { ClearinghouseStateResponse } from '@nktkas/hyperliquid';
 
@@ -41,16 +41,18 @@ export function registerCloseLimitCommand(position: Command): void {
         const limitPx = validatePositiveNumber(resolvedPriceArg, 'price');
         const tif = validateTif(options.tif || 'Ioc');
 
-        const { assetIndex, szDecimals, coin: apiCoin } = await getAssetInfo(publicClient, resolvedCoin);
+        const { assetIndex, szDecimals, coin: apiCoin, dexName } = await getAssetInfo(publicClient, resolvedCoin);
 
         const clearinghouseStates = await fetchAllDexsClearinghouseStates(ctx, address);
 
-        const assetPosition = clearinghouseStates.flatMap(
-          ([, state]: [string, ClearinghouseStateResponse]) =>
-            (state?.assetPositions ?? []),
-        ).find(
-          (ap: any) => ap.position.coin.toUpperCase() === apiCoin.toUpperCase() && !new Decimal(ap.position.szi || '0').isZero(),
-        );
+        const assetPosition = clearinghouseStates
+          .filter(([name]: [string, ClearinghouseStateResponse]) => name === dexNameToStateKey(dexName))
+          .flatMap(
+            ([, state]: [string, ClearinghouseStateResponse]) =>
+              (state?.assetPositions ?? []),
+          ).find(
+            (ap: any) => ap.position.coin.toUpperCase() === apiCoin.toUpperCase() && !new Decimal(ap.position.szi || '0').isZero(),
+          );
 
         if (!assetPosition) {
           throw new Error(`No open position for ${apiCoin}`);
@@ -69,8 +71,7 @@ export function registerCloseLimitCommand(position: Command): void {
         const isBuy = !isLong;
 
         // Validate limit price against mark to catch typos
-        const dexOpt = resolvedCoin.toLowerCase().startsWith('xyz:') || resolvedCoin.toLowerCase().startsWith('xyz ') ? { dex: 'xyz' as const } : {};
-        const mids = await publicClient.allMids(dexOpt) as Record<string, string>;
+        const mids = await publicClient.allMids(dexNameToOpt(dexName)) as Record<string, string>;
         const midStr = mids[apiCoin];
         if (midStr) {
           const mid = new Decimal(midStr);

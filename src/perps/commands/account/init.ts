@@ -52,7 +52,7 @@ export function registerInitCommand(account: Command): void {
       const ctx = getPerpsContext(this);
       const outputOpts = getPerpsOutputOptions(this);
       try {
-        console.log("\n=== Byreal Perps Account Setup ===\n");
+        if (!outputOpts.json) console.log("\n=== Byreal Perps Account Setup ===\n");
         cleanupExpiredAccounts();
 
         const setDefault = resolveDefault(options);
@@ -150,7 +150,7 @@ async function handleExistingAgentKey(
     return;
   }
 
-  console.log("\nValidating agent wallet...");
+  if (!outputOpts.json) console.log("\nValidating agent wallet...");
   const result = await validateAgent(agentPrivateKey);
 
   if (!result.valid) {
@@ -160,9 +160,11 @@ async function handleExistingAgentKey(
   const masterAddress = result.masterAddress;
   const agentAddress = result.agentAddress;
 
-  console.log(
-    `Valid agent wallet for ${masterAddress.slice(0, 6)}...${masterAddress.slice(-4)}`,
-  );
+  if (!outputOpts.json) {
+    console.log(
+      `Valid agent wallet for ${masterAddress.slice(0, 6)}...${masterAddress.slice(-4)}`,
+    );
+  }
 
   const newAccount = createPerpsAccount({
     alias,
@@ -184,9 +186,9 @@ async function handleGenerateAgent(
   const masterPrivateKey = validatePrivateKey(masterKeyInput);
   const masterAccount = privateKeyToAccount(masterPrivateKey);
 
-  console.log("Generating agent wallet and signing approval...");
+  if (!outputOpts.json) console.log("Generating agent wallet and signing approval...");
   const result = await approveAgentWithMasterKey(masterAccount);
-  console.log(`Agent wallet approved: ${result.agentAddress}`);
+  if (!outputOpts.json) console.log(`Agent wallet approved: ${result.agentAddress}`);
 
   const newAccount = createPerpsAccount({
     alias,
@@ -209,16 +211,16 @@ async function handleTokenAgent(
   const baseUrl = getBaseUrl();
   const token = evmWallet.token;
   const walletAddress = evmWallet.address;
-  console.log("Resolving wallet address from token...");
+  if (!outputOpts.json) console.log("Resolving wallet address from token...");
   const masterAccount = createServerSigningAccount(
     token,
     walletAddress,
     baseUrl,
   );
 
-  console.log("Generating agent wallet and signing approval via server...");
+  if (!outputOpts.json) console.log("Generating agent wallet and signing approval via server...");
   const result = await approveAgentWithMasterKey(masterAccount);
-  console.log(`Agent wallet approved: ${result.agentAddress}`);
+  if (!outputOpts.json) console.log(`Agent wallet approved: ${result.agentAddress}`);
 
   const newAccount = createPerpsAccount({
     alias,

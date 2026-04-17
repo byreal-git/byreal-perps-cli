@@ -2,7 +2,7 @@ import Decimal from 'decimal.js';
 import { Command } from 'commander';
 import { getPerpsContext, getPerpsOutputOptions } from '../../cli/program.js';
 import { output, outputError, outputSuccess } from '../../cli/output.js';
-import { getAssetInfo, formatPrice, formatOrderStatus, isKnownDex } from '../order/shared.js';
+import { getAssetInfo, formatPrice, formatOrderStatus, isKnownDex, dexNameToStateKey, dexNameToOpt } from '../order/shared.js';
 import { fetchAllDexsClearinghouseStates } from '../../lib/fetch-states.js';
 import { HL_TPSL_SLIPPAGE_PCT } from '../../constants.js';
 import type { ClearinghouseStateResponse } from '@nktkas/hyperliquid';
@@ -73,16 +73,18 @@ export function registerTpSlCommand(position: Command): void {
           resolvedCoin = `${coin}:${excessArgs[0]}`;
         }
 
-        const { assetIndex, szDecimals, coin: apiCoin } = await getAssetInfo(publicClient, resolvedCoin);
+        const { assetIndex, szDecimals, coin: apiCoin, dexName } = await getAssetInfo(publicClient, resolvedCoin);
 
-        // Verify position exists
+        // Verify position exists (filter by resolved DEX)
         const clearinghouseStates = await fetchAllDexsClearinghouseStates(ctx, address);
-        const assetPosition = clearinghouseStates.flatMap(
-          ([, state]: [string, ClearinghouseStateResponse]) =>
-            (state?.assetPositions ?? []),
-        ).find(
-          (ap: any) => ap.position.coin.toUpperCase() === apiCoin.toUpperCase() && !new Decimal(ap.position.szi || '0').isZero(),
-        );
+        const assetPosition = clearinghouseStates
+          .filter(([name]: [string, ClearinghouseStateResponse]) => name === dexNameToStateKey(dexName))
+          .flatMap(
+            ([, state]: [string, ClearinghouseStateResponse]) =>
+              (state?.assetPositions ?? []),
+          ).find(
+            (ap: any) => ap.position.coin.toUpperCase() === apiCoin.toUpperCase() && !new Decimal(ap.position.szi || '0').isZero(),
+          );
 
         if (!assetPosition) {
           throw new Error(`No open position for ${apiCoin}`);
@@ -92,13 +94,9 @@ export function registerTpSlCommand(position: Command): void {
         const currentSzi = new Decimal(pos.szi);
         const isLong = currentSzi.gt(0);
 
-        // Fetch existing TP/SL orders via frontendOpenOrders
-        const [mainOrders, xyzOrders] = await Promise.all([
-          publicClient.frontendOpenOrders({ user: address }),
-          publicClient.frontendOpenOrders({ user: address, dex: 'xyz' }),
-        ]);
-        const allOrders = [...mainOrders, ...xyzOrders];
-        const existing = findExistingTpSl(allOrders, apiCoin);
+        // Fetch existing TP/SL orders from the resolved DEX only
+        const dexOrders = await publicClient.frontendOpenOrders({ user: address, ...dexNameToOpt(dexName) });
+        const existing = findExistingTpSl(dexOrders as any[], apiCoin);
 
         const wantCancel = options.cancelTp || options.cancelSl;
         const wantSet = options.tp || options.sl;
@@ -135,12 +133,8 @@ export function registerTpSlCommand(position: Command): void {
 
         // Set new TP/SL orders
         if (wantSet) {
-          // Fetch mid price once for direction validation
-          const [mainMids, xyzMids] = await Promise.all([
-            publicClient.allMids() as Promise<Record<string, string>>,
-            publicClient.allMids({ dex: 'xyz' }) as Promise<Record<string, string>>,
-          ]);
-          const mids: Record<string, string> = { ...mainMids, ...xyzMids };
+          // Fetch mid price from the resolved DEX for direction validation
+          const mids = await publicClient.allMids(dexNameToOpt(dexName)) as Record<string, string>;
           const mid = new Decimal(mids[apiCoin] ?? '0');
 
           if (options.tp) {
@@ -226,15 +220,65 @@ export function registerTpSlCommand(position: Command): void {
             });
           }
 
-          const result = await client.order({
-            orders,
-            grouping: 'positionTpsl' as const,
-          } as any);
+          const MAX_RETRIES = 2;
+          let orderResult: any;
+          let lastError: Error | null = null;
+
+          for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+              orderResult = await client.order({
+                orders,
+                grouping: 'positionTpsl' as const,
+              } as any);
+              lastError = null;
+              break;
+            } catch (err) {
+              lastError = err instanceof Error ? err : new Error(String(err));
+            }
+          }
+
+          if (lastError) {
+            if (preCancels.length > 0) {
+              const restoreOrders: any[] = [];
+              if (options.tp && existing.tp) {
+                const triggerPx = formatPrice(existing.tp.triggerPx, szDecimals);
+                restoreOrders.push({
+                  a: assetIndex,
+                  b: tpslSide,
+                  p: formatPrice(new Decimal(triggerPx).mul(slippageMul), szDecimals),
+                  s: '0',
+                  r: true,
+                  t: { trigger: { isMarket: true, triggerPx, tpsl: 'tp' } },
+                });
+              }
+              if (options.sl && existing.sl) {
+                const triggerPx = formatPrice(existing.sl.triggerPx, szDecimals);
+                restoreOrders.push({
+                  a: assetIndex,
+                  b: tpslSide,
+                  p: formatPrice(new Decimal(triggerPx).mul(slippageMul), szDecimals),
+                  s: '0',
+                  r: true,
+                  t: { trigger: { isMarket: true, triggerPx, tpsl: 'sl' } },
+                });
+              }
+              if (restoreOrders.length > 0) {
+                try {
+                  await client.order({ orders: restoreOrders, grouping: 'positionTpsl' as const } as any);
+                } catch {
+                  throw new Error(
+                    `Failed to set new TP/SL and could not restore previous orders. Position may be unprotected. Original error: ${lastError.message}`,
+                  );
+                }
+              }
+            }
+            throw lastError;
+          }
 
           if (outputOpts.json) {
-            output(result, outputOpts);
+            output(orderResult, outputOpts);
           } else {
-            const statuses = (result as any).response?.data?.statuses ?? [];
+            const statuses = (orderResult as any).response?.data?.statuses ?? [];
             for (const status of statuses) {
               outputSuccess(formatOrderStatus(status));
             }

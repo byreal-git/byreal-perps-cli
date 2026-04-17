@@ -32,6 +32,18 @@ const DEX_NAME_TO_INDEX: Record<string, number> = Object.fromEntries(
   Object.entries(DEX_NAME_REGISTRY).map(([k, v]) => [v, Number(k)]),
 );
 
+export function dexNameToStateKey(name: string): string {
+  return name === 'main' ? '' : name;
+}
+
+export function stateKeyToDexName(key: string): string {
+  return key === '' ? 'main' : key;
+}
+
+export function dexNameToOpt(name: string): { dex: string } | Record<string, never> {
+  return name === 'main' ? {} : { dex: name };
+}
+
 /**
  * Parse coin input that may include a DEX prefix.
  * Supported formats:
@@ -228,8 +240,10 @@ export function formatOrderStatus(status: unknown): string {
 export async function getMidPrice(
   publicClient: InfoClient,
   coin: string,
+  dexName?: string,
 ): Promise<Decimal> {
-  const mids = await publicClient.allMids();
+  const opt = dexName ? dexNameToOpt(dexName) : {};
+  const mids = await publicClient.allMids(opt);
   const midStr = (mids as Record<string, string>)[coin];
 
   if (midStr) {
@@ -237,7 +251,7 @@ export async function getMidPrice(
     if (mid.isFinite() && mid.gt(0)) return mid;
   }
 
-  const book = await publicClient.l2Book({ coin });
+  const book = await publicClient.l2Book({ coin, ...opt } as any);
   const levels = (book as any).levels as { px: string }[][];
   const bestBid = levels?.[0]?.[0]?.px;
   const bestAsk = levels?.[1]?.[0]?.px;

@@ -58,7 +58,7 @@ export function registerMarketCommand(order: Command): void {
           options.slippage ?? config.slippage,
         ).div(100);
 
-        const midPrice = await getMidPrice(publicClient, apiCoin);
+        const midPrice = await getMidPrice(publicClient, apiCoin, asset.dexName);
 
         const limitPx = isBuy
           ? midPrice.mul(new Decimal(1).plus(slippagePct))

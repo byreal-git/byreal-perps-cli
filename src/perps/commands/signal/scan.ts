@@ -108,7 +108,7 @@ function scoreAsset(data: AssetMarketData, rsi: number | null): AssetSignal {
   const momentumScore = Math.min(absChange / 15, 1) * 100;
 
   // 2. Funding score: for longs, negative funding is good; for shorts, positive is good
-  const fundingAnnualized = funding * 365 * 3; // 8h rate to annualized
+  const fundingAnnualized = funding * 24 * 365; // hourly rate to annualized
   const fundingScore = isLong
     ? Math.max(0, Math.min(1, (0.3 - fundingAnnualized) / 0.6)) * 100
     : Math.max(0, Math.min(1, (fundingAnnualized + 0.3) / 0.6)) * 100;

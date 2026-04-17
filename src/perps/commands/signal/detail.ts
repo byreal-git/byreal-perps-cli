@@ -177,7 +177,7 @@ async function analyzeAsset(
   const prevDayPx = new Decimal(actx.prevDayPx);
   const change24h = markPx.minus(prevDayPx).div(prevDayPx).mul(100);
   const funding = new Decimal(actx.funding);
-  const fundingAnn = funding.mul(365 * 3 * 100);
+  const fundingAnn = funding.mul(24 * 365 * 100);
   const dayNtlVlm = new Decimal(actx.dayNtlVlm);
   const openInterest = new Decimal(actx.openInterest);
 
@@ -308,7 +308,7 @@ function formatDetailText(a: DetailAnalysis): void {
   row('Price', a.price);
   row('Oracle Price', a.oraclePrice);
   row('24h Change', a.change24h);
-  row('Funding (8h)', a.funding);
+  row('Funding (1h)', a.funding);
   row('Funding (annualized)', a.fundingAnnualized);
   row('24h Volume', a.volume24h);
   row('Open Interest', a.openInterest);

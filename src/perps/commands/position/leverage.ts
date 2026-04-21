@@ -11,7 +11,7 @@ export function registerLeverageCommand(position: Command): void {
     .argument('<coin>', 'Coin symbol (e.g., BTC, ETH, xyz:gold, xyz gold)')
     .argument('<leverage>', 'Leverage value (1-50)')
     .allowExcessArguments()
-    .option('--cross', 'Use cross margin (default)')
+    .option('--cross', 'Use cross margin')
     .option('--isolated', 'Use isolated margin')
     .action(async function (
       this: Command,
@@ -30,12 +30,21 @@ export function registerLeverageCommand(position: Command): void {
           resolveSplitCoinArg(coin, leverageArg, this.args.slice(2));
 
         const leverage = validateLeverage(resolvedLeverageArg);
-        const { assetIndex } = await getAssetInfo(publicClient, resolvedCoin);
+        const assetInfo = await getAssetInfo(publicClient, resolvedCoin);
 
-        const isCross = options.cross || !options.isolated;
+        let isCross: boolean;
+        if (options.cross) {
+          isCross = true;
+        } else if (options.isolated) {
+          isCross = false;
+        } else {
+          const address = ctx.getWalletAddress();
+          const activeData = await publicClient.activeAssetData({ user: address, coin: assetInfo.coin });
+          isCross = activeData.leverage.type === 'cross';
+        }
 
         const result = await client.updateLeverage({
-          asset: assetIndex,
+          asset: assetInfo.assetIndex,
           isCross,
           leverage,
         });

@@ -18,7 +18,7 @@ npm install -g @byreal-io/byreal-perps-cli
 
 ## Features
 
-- **Account** — Initialize perps account (generate or token method), view balance, trade history.
+- **Account** — Initialize perps account, view balance, trade history.
 - **Orders** — Market and limit orders with TP/SL, list open orders, cancel orders.
 - **Positions** — List positions, set/manage TP/SL on existing positions, close at market/limit, close all, set leverage.
 - **Signals** — Scan markets for trading signals, detailed technical analysis per coin.
@@ -27,11 +27,8 @@ npm install -g @byreal-io/byreal-perps-cli
 ## Quick Start
 
 ```bash
-# Initialize perps account (default: token method, no private key needed)
+# Initialize perps account (no private key needed)
 byreal-perps-cli account init
-
-# Or initialize via generate method (requires EVM wallet private key)
-byreal-perps-cli account init --method generate
 
 # Check account info
 byreal-perps-cli account info
@@ -86,7 +83,7 @@ All commands support `-o json` for structured output.
 
 | Command                  | Description                                         |
 | ------------------------ | --------------------------------------------------- |
-| `account init`           | Interactive setup wizard (token default, or generate) |
+| `account init`           | Interactive setup wizard                              |
 | `account info`           | Show perps account info & balance                    |
 | `account history`        | Show recent trade history                            |
 | `order market`           | Place a market order with optional TP/SL             |

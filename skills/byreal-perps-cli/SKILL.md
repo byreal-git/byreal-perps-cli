@@ -75,9 +75,7 @@ npm install -g @byreal-io/byreal-perps-cli
 ## Credentials & Permissions
 
 - **All trading commands** require account initialization via `byreal-perps-cli account init` before any trading operations
-- Two initialization methods:
-  - `--method token` (default): Uses OpenClaw config (`~/.openclaw/realclaw-config.json`) to sign via server-side Privy proxy. No private key needed — reads wallet address and auth token from the config file.
-  - `--method generate`: Requires EVM wallet private key (`--master-key`). Generates and approves an agent wallet locally.
+- Initialization uses OpenClaw config (`~/.openclaw/realclaw-config.json`) to sign via server-side Privy proxy. No private key needed — reads wallet address and auth token from the config file.
 - Read-only commands (account info, position list, order list, account history): Require initialized perps account
 - Write commands (order market, order limit, order cancel, position close-market/close-limit/close-all, position leverage): Require initialized perps account with valid agent wallet
 - Signal commands (signal scan, signal detail): No account required — uses public market data only
@@ -147,11 +145,8 @@ If a command returns a connection error:
 ### Account Management
 
 ```bash
-# Initialize perps account (default: token method, no private key needed)
+# Initialize perps account (no private key needed)
 byreal-perps-cli account init
-
-# Initialize via generate method (requires EVM wallet private key)
-byreal-perps-cli account init --method generate
 
 # Show account info & balance
 byreal-perps-cli account info

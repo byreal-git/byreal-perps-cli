@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { getPerpsContext, getPerpsOutputOptions } from '../../cli/program.js';
 import { output, outputError } from '../../cli/output.js';
+import { getAssetInfo, isKnownDex, dexNameToOpt } from '../order/shared.js';
 import type { InfoClient, CandleSnapshotResponse } from '@nktkas/hyperliquid';
 
 // ============================================
@@ -141,6 +142,7 @@ async function fetchCandles(
   coin: string,
   interval: '1h' | '4h',
   count: number,
+  dexOpt: Record<string, string>,
 ): Promise<CandleSnapshotResponse> {
   const intervalMs = interval === '4h' ? 4 * 60 * 60 * 1000 : 60 * 60 * 1000;
   const now = Date.now();
@@ -150,7 +152,8 @@ async function fetchCandles(
     interval,
     startTime,
     endTime: now,
-  });
+    ...dexOpt,
+  } as any);
   return (candles || []).sort((a, b) => a.t - b.t);
 }
 
@@ -158,19 +161,13 @@ async function analyzeAsset(
   client: InfoClient,
   coin: string,
 ): Promise<DetailAnalysis> {
-  // Fetch meta + asset context (main + xyz)
-  const [[meta, assetCtxs], [xyzMeta, xyzAssetCtxs]] = await Promise.all([
-    client.metaAndAssetCtxs(),
-    client.metaAndAssetCtxs({ dex: 'xyz' }),
-  ]);
+  const assetInfo = await getAssetInfo(client, coin);
+  const apiCoin = assetInfo.coin;
+  const dexOpt = dexNameToOpt(assetInfo.dexName);
 
-  let idx = meta.universe.findIndex((a) => a.name.toUpperCase() === coin.toUpperCase());
-  let actx = idx !== -1 ? assetCtxs[idx] : undefined;
-
-  if (!actx) {
-    idx = xyzMeta.universe.findIndex((a) => a.name.toUpperCase() === coin.toUpperCase());
-    actx = idx !== -1 ? xyzAssetCtxs[idx] : undefined;
-  }
+  const [meta, assetCtxs] = await client.metaAndAssetCtxs(dexOpt as any);
+  const idx = meta.universe.findIndex((a) => a.name.toUpperCase() === apiCoin.toUpperCase());
+  const actx = idx !== -1 ? assetCtxs[idx] : undefined;
 
   if (!actx) throw new Error(`Unknown coin: ${coin}`);
   const markPx = new Decimal(actx.markPx);
@@ -183,8 +180,8 @@ async function analyzeAsset(
 
   // Fetch candles
   const [candles4h, candles1h] = await Promise.all([
-    fetchCandles(client, coin, '4h', 30),
-    fetchCandles(client, coin, '1h', 50),
+    fetchCandles(client, apiCoin, '4h', 30, dexOpt),
+    fetchCandles(client, apiCoin, '1h', 50, dexOpt),
   ]);
 
   const closes4h = candles4h.map((c) => new Decimal(c.c));
@@ -247,11 +244,11 @@ async function analyzeAsset(
 
   if (bullish >= 3) {
     trendAlignment = 'Strong bullish';
-    suggestion = `Multiple indicators aligned bullish. Consider Long ${coin}.`;
+    suggestion = `Multiple indicators aligned bullish. Consider Long ${apiCoin}.`;
     category = bullish >= 4 ? 'aggressive' : 'moderate';
   } else if (bearish >= 3) {
     trendAlignment = 'Strong bearish';
-    suggestion = `Multiple indicators aligned bearish. Consider Short ${coin}.`;
+    suggestion = `Multiple indicators aligned bearish. Consider Short ${apiCoin}.`;
     category = bearish >= 4 ? 'aggressive' : 'moderate';
   } else if (bullish > bearish) {
     trendAlignment = 'Mildly bullish';
@@ -268,7 +265,7 @@ async function analyzeAsset(
   }
 
   return {
-    coin,
+    coin: apiCoin,
     price: markPx.toSignificantDigits(6).toString(),
     change24h: `${change24h.toFixed(2)}%`,
     funding: funding.toString(),
@@ -347,14 +344,22 @@ export function registerDetailCommand(signal: Command): void {
   signal
     .command('detail')
     .description('Show detailed signal analysis for a specific coin')
-    .argument('<coin>', 'Coin symbol (e.g., BTC, ETH)')
+    .argument('<coin>', 'Coin symbol (e.g., BTC, ETH, xyz:gold, xyz gold)')
+    .allowExcessArguments()
     .action(async function (this: Command, coin: string) {
       const ctx = getPerpsContext(this);
       const outputOpts = getPerpsOutputOptions(this);
 
       try {
         const client = ctx.getPublicClient();
-        const analysis = await analyzeAsset(client, coin.toUpperCase());
+
+        const excessArgs = this.args.slice(1);
+        let resolvedCoin = coin;
+        if (excessArgs.length > 0 && isKnownDex(coin)) {
+          resolvedCoin = `${coin}:${excessArgs[0]}`;
+        }
+
+        const analysis = await analyzeAsset(client, resolvedCoin);
 
         if (outputOpts.json) {
           output(analysis, outputOpts);

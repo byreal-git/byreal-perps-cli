@@ -163,6 +163,19 @@ const CAPABILITIES: Capability[] = [
     ],
   },
   {
+    id: 'position.margin',
+    name: 'Adjust Margin',
+    description: 'Add or remove margin for an isolated position. Only works when the position is in isolated margin mode. Validates available balance (add) or max removable margin (remove) before execution.',
+    category: 'execute',
+    auth_required: true,
+    command: 'byreal-perps-cli position margin <coin> <action> <amount>',
+    params: [
+      { name: 'coin', type: 'string', required: true, description: 'Coin symbol (e.g., BTC, ETH, xyz:gold)' },
+      { name: 'action', type: 'string', required: true, description: 'Action: add or remove' },
+      { name: 'amount', type: 'string', required: true, description: 'Amount in USDC' },
+    ],
+  },
+  {
     id: 'position.margin-mode',
     name: 'Switch Margin Mode',
     description: 'Switch margin mode between cross and isolated for a coin. Validates whether the asset supports the target mode before switching.',

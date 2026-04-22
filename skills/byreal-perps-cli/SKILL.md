@@ -1,6 +1,6 @@
 ---
 name: byreal-perps-cli
-description: "Byreal Hyperliquid perpetual futures trading CLI: account setup, market/limit orders with TP/SL, position TP/SL management, position close-market/close-limit/close-all, leverage control, margin mode switch (cross/isolated), trade history, market signal scanner & technical analysis. Use when user mentions Hyperliquid, perps, perpetual futures, leverage trading, margin mode, or market signals/technical analysis."
+description: "Byreal Hyperliquid perpetual futures trading CLI: account setup, market/limit orders with TP/SL, position TP/SL management, position close-market/close-limit/close-all, leverage control, margin mode switch (cross/isolated), isolated margin adjustment (add/remove), trade history, market signal scanner & technical analysis. Use when user mentions Hyperliquid, perps, perpetual futures, leverage trading, margin mode, margin adjustment, or market signals/technical analysis."
 metadata:
   openclaw:
     homepage: https://github.com/byreal-git/byreal-perps-cli
@@ -199,6 +199,11 @@ byreal-perps-cli position leverage <coin> <leverage>
 byreal-perps-cli position margin-mode <coin> <mode>
 byreal-perps-cli position margin-mode BTC cross
 byreal-perps-cli position margin-mode ETH isolated
+
+# Add or remove margin for isolated position
+byreal-perps-cli position margin <coin> <add|remove> <amount>
+byreal-perps-cli position margin BTC add 100
+byreal-perps-cli position margin ETH remove 50
 
 # Set TP/SL on existing position
 byreal-perps-cli position tpsl <coin> --tp <price> --sl <price>
